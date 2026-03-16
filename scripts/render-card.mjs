@@ -249,7 +249,7 @@ async function renderCard(creatureJsonPath, avatarPath, outputPath) {
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
     const card = await page.$('.trading-card');
-    await card.screenshot({ path: outputPath, type: 'png' });
+    await card.screenshot({ path: outputPath, type: 'png', omitBackground: true });
     console.log(`Card saved to ${outputPath}`);
   } finally {
     await browser.close();
