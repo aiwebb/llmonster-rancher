@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .trading-card {
+    width: 380px;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+    background:
+      radial-gradient(ellipse at 30% 10%, var(--type-glow-bg, rgba(244,63,94,0.12)) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 85%, var(--type-glow-bg2, rgba(251,146,60,0.08)) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, var(--card-bg, #110b1e) 0%, var(--card-deep, #0a0510) 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+    border: 2.5px solid var(--type-primary, #534AB7);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Type pattern overlay */
+  .type-pattern {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.035;
+  }
+
+  /* Scan-line overlay */
+  .trading-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.03;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent, transparent 2px,
+      var(--type-accent-faint, rgba(175,169,236,0.15)) 2px,
+      var(--type-accent-faint, rgba(175,169,236,0.15)) 3px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Rarity holographic shimmer */
+  .trading-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 11;
+  }
+  .rarity-common .trading-card::after { background: none; }
+  .rarity-uncommon .trading-card::after {
+    background: linear-gradient(135deg, transparent 40%, rgba(74,222,128,0.03) 50%, transparent 60%);
+  }
+  .rarity-rare .trading-card::after {
+    background: linear-gradient(135deg, transparent 30%, rgba(96,165,250,0.05) 50%, transparent 70%);
+  }
+  .rarity-epic .trading-card::after {
+    background: linear-gradient(135deg, transparent 25%, rgba(192,132,252,0.06) 50%, transparent 75%);
+  }
+  .rarity-legendary .trading-card::after {
+    background: linear-gradient(135deg, transparent 20%, rgba(251,191,36,0.08) 45%, transparent 55%, rgba(251,191,36,0.04) 70%, transparent 80%);
+  }
+
+  /* --- Header: name + HP --- */
+  .card-header {
+    padding: 10px 12px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    z-index: 2;
+  }
+
+  .creature-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary, #d4c4f0);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Crimson Text', 'Palatino Linotype', Palatino, Georgia, serif;
+  }
+
+  .creature-subtitle {
+    font-size: 9.5px;
+    color: var(--type-mid, #7F77DD);
+    margin-top: 1px;
+    font-style: italic;
+    font-family: 'Crimson Text', Georgia, serif;
+  }
+
+  .hp-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    background: rgba(226,75,74,0.15);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  .hp-value {
+    font-size: 19px;
+    font-weight: 700;
+    color: #e24b4a;
+  }
+
+  .hp-label {
+    font-size: 9px;
+    color: #e24b4a;
+    font-weight: 600;
+  }
+
+  /* --- Avatar --- */
+  .avatar-frame {
+    margin: 0 8px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid var(--type-border, #3C3489);
+    position: relative;
+    z-index: 2;
+    height: 210px;
+    background: var(--card-deep, #0d0818);
+  }
+
+  .avatar-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%;
+    opacity: 0.92;
+    display: block;
+  }
+
+  /* Gradient fades on avatar */
+  .avatar-fade-bottom {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(transparent, var(--card-deep, #0d0818));
+  }
+
+  .avatar-fade-top {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 20px;
+    background: linear-gradient(var(--card-deep, #0d0818), transparent);
+  }
+
+  /* Type badges on avatar */
+  .avatar-type-badges {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .avatar-type-badge {
+    font-size: 8.5px;
+    color: var(--card-bg, #110b1e);
+    background: var(--type-accent, #AFA9EC);
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  /* Rarity badge on avatar */
+  .avatar-rarity-badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 8px;
+    color: var(--rarity-color, #AFA9EC);
+    background: rgba(17,11,30,0.75);
+    padding: 2px 7px;
+    border-radius: 3px;
+    border: 0.5px solid var(--type-border, #3C3489);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* Species line at bottom of avatar */
+  .avatar-species {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 8.5px;
+    color: #8a7aaa;
+    font-style: italic;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  /* --- Flavor text / description --- */
+  .flavor-section {
+    padding: 8px 12px 6px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .flavor-text {
+    font-size: 9.5px;
+    color: var(--text-muted, #9a8aba);
+    line-height: 1.55;
+    font-style: italic;
+    font-family: 'Crimson Text', Georgia, serif;
+  }
+
+  /* --- Abilities --- */
+  .abilities-section {
+    padding: 0 12px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .abilities-divider {
+    border-top: 1px solid var(--divider, #221538);
+    padding-top: 7px;
+  }
+
+  .ability {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin-bottom: 6px;
+  }
+
+  .ability-dot {
+    min-width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--type-primary, #e24b4a);
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .ability-content {
+    flex: 1;
+  }
+
+  .ability-name {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-primary, #d4c4f0);
+  }
+
+  .ability-meta {
+    font-weight: 400;
+    color: var(--text-dim, #8a7aaa);
+    font-size: 9px;
+  }
+
+  .ability-desc {
+    font-size: 8.5px;
+    color: var(--text-dim, #6a5a8a);
+    margin-top: 1px;
+    line-height: 1.35;
+  }
+
+  .ability-cost {
+    font-size: 9px;
+    color: var(--type-primary, #e24b4a);
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  /* --- Stats row --- */
+  .stats-section {
+    padding: 6px 12px 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .stats-row {
+    border-top: 1px solid var(--divider, #221538);
+    padding-top: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .stat-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .stat-label {
+    font-size: 7px;
+    color: var(--type-border, #534AB7);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-weight: 600;
+  }
+
+  .stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary, #d4c4f0);
+  }
+
+  /* --- Footer --- */
+  .card-footer {
+    padding: 6px 12px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .footer-text {
+    font-size: 7.5px;
+    color: var(--type-border, #3C3489);
+    letter-spacing: 0.3px;
+  }
+
+  /* Bottom accent bar */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2.5px;
+    background: linear-gradient(90deg,
+      var(--type-border, #3C3489),
+      var(--type-primary, #534AB7),
+      var(--type-mid, #7F77DD),
+      var(--type-accent, #AFA9EC),
+      var(--type-mid, #7F77DD),
+      var(--type-primary, #534AB7),
+      var(--type-border, #3C3489)
+    );
+    z-index: 11;
+  }
+
+  /* --- Rarity colors --- */
+  .rarity-common    { --rarity-color: #8a8a8a; }
+  .rarity-uncommon  { --rarity-color: #4ade80; }
+  .rarity-rare      { --rarity-color: #60a5fa; }
+  .rarity-epic      { --rarity-color: #c084fc; }
+  .rarity-legendary { --rarity-color: #fbbf24; }
+</style>
+</head>
+<body>
+  <div class="{{RARITY_CLASS}}">
+  <div class="trading-card" style="
+    --card-bg: {{CARD_BG}};
+    --card-deep: {{CARD_DEEP}};
+    --type-primary: {{TYPE_PRIMARY}};
+    --type-mid: {{TYPE_MID}};
+    --type-accent: {{TYPE_ACCENT}};
+    --type-accent-faint: {{TYPE_ACCENT_FAINT}};
+    --type-border: {{TYPE_BORDER}};
+    --type-glow-bg: {{TYPE_GLOW_BG}};
+    --type-glow-bg2: {{TYPE_GLOW_BG2}};
+    --text-primary: {{TEXT_PRIMARY}};
+    --text-muted: {{TEXT_MUTED}};
+    --text-dim: {{TEXT_DIM}};
+    --divider: {{DIVIDER}};
+  ">
+
+    <!-- Type pattern -->
+    <div class="type-pattern" style="background: {{TYPE_PATTERN}}"></div>
+
+    <!-- Header -->
+    <div class="card-header">
+      <div>
+        <div class="creature-name">{{NAME}}</div>
+        <div class="creature-subtitle">{{SUBTITLE}}</div>
+      </div>
+      <div class="hp-display">
+        <span class="hp-value">{{HP}}</span>
+        <span class="hp-label">HP</span>
+      </div>
+    </div>
+
+    <!-- Avatar -->
+    <div class="avatar-frame">
+      <img src="{{AVATAR_SRC}}" alt="{{NAME}}" />
+      <div class="avatar-fade-bottom"></div>
+      <div class="avatar-fade-top"></div>
+      <div class="avatar-type-badges">
+        <span class="avatar-type-badge">{{TYPE}}</span>
+      </div>
+      <span class="avatar-rarity-badge">{{RARITY}}</span>
+      <span class="avatar-species">{{SPECIES_LINE}}</span>
+    </div>
+
+    <!-- Flavor text -->
+    <div class="flavor-section">
+      <div class="flavor-text">{{DESCRIPTION}}</div>
+    </div>
+
+    <!-- Abilities -->
+    <div class="abilities-section">
+      <div class="abilities-divider">
+        {{ABILITIES_HTML}}
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-section">
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-label">ATK</div>
+          <div class="stat-value">{{ATK}}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">DEF</div>
+          <div class="stat-value">{{DEF}}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">SPD</div>
+          <div class="stat-value">{{SPD}}</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">MAG</div>
+          <div class="stat-value">{{MAG}}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <span class="footer-text">LLMonster Rancher &bull; No. {{CARD_NUMBER}}</span>
+      <span class="footer-text">{{FOOTER_RIGHT}}</span>
+    </div>
+
+    <div class="bottom-bar"></div>
+  </div>
+  </div>
+</body>
+</html>

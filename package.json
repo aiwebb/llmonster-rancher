@@ -1,0 +1,9 @@
+{
+  "name": "llmonster-rancher",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Generate trading card creatures from URLs using LLMs",
+  "dependencies": {
+    "puppeteer": "^24.0.0"
+  }
+}
